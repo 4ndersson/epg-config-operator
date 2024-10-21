@@ -1,0 +1,8 @@
+apiVersion: epg.custom.aci/v1alpha1
+kind: Epgconf
+metadata:
+  labels:
+    app.kubernetes.io/name: epg-config-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: epgconf-sample
+  namespace: ns1

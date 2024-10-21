@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- epg_v1alpha1_epgconf.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

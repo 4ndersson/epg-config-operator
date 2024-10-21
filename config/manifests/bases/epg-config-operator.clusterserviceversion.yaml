@@ -1,0 +1,49 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: epg-config-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Epgconf is the Schema for the epgconfs API
+      displayName: Epgconf
+      kind: Epgconf
+      name: epgconfs.epg.custom.aci
+      version: v1alpha1
+  description: Used to create EPG in Cisco ACI based on namespace and add nescessary
+    configuration such as VMM, BD and contracts
+  displayName: ACI EPG Configurator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - aci
+  - epg
+  links:
+  - name: Epg Config Operator
+    url: https://epg-config-operator.domain
+  maintainers:
+  - email: sebastian.an91@gmail.com
+    name: Sebastian Andersson
+  maturity: alpha
+  provider:
+    name: Sebastian Andersson
+  version: 0.0.0
