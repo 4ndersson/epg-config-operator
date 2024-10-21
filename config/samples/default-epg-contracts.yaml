@@ -1,0 +1,16 @@
+apiVersion: v1
+data:
+  provided: |-
+    [
+      "test-in-tenant",
+      "test-in-common"
+    ]
+  consumed: |-
+    [
+      "test-in-tenant",
+      "test-in-common"
+    ]
+kind: ConfigMap
+metadata:
+  name: default-epg-contracts
+  namespace: aci-containers-system

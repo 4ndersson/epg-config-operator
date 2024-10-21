@@ -8,6 +8,7 @@ This operator is used to manage a CRD called `Epgconf`. Based on that object, wh
 - docker version 17.03+.
 - kubectl version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
+- A custom configmap created which contains provided and consumed contracts that will be added to each synced EPG, see `config/samples/default-epg-contracts.yaml`.
 
 ### To Deploy on the cluster (alt 1)
 **Clone this repo:**
