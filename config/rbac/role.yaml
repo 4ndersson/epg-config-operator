@@ -19,7 +19,7 @@ rules:
   verbs:
   - get
   - list
-  - path
+  - patch
   - watch
 - apiGroups:
   - ""
@@ -29,6 +29,12 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
 - apiGroups:
   - epg.custom.aci
   resources:

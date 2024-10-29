@@ -157,8 +157,9 @@ func getStartupConfiguration(c client.Client, cs *kubernetes.Clientset, co *rest
 }
 
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
-// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;path;watch
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;patch;watch
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=pods/exec,verbs=create
 
 func main() {
 	var metricsAddr string
