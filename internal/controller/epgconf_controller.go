@@ -59,9 +59,9 @@ type CniConfig struct {
 	ConsumedContracts  []string
 }
 
-//+kubebuilder:rbac:groups=epg.custom.aci,resources=confs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=epg.custom.aci,resources=confs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=epg.custom.aci,resources=confs/finalizers,verbs=update
+//+kubebuilder:rbac:groups=epg.custom.aci,resources=epgconfs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=epg.custom.aci,resources=epgconfs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=epg.custom.aci,resources=epgconfs/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
