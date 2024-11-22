@@ -201,7 +201,7 @@ func (r *EpgconfReconciler) finalizeEpgConf(ctx context.Context, l logr.Logger, 
 }
 
 func (r *EpgconfReconciler) AnnotateNamespace(ctx context.Context, nsName, app, tenant string) error {
-	dnJson := fmt.Sprintf(`{\"tenant\":\"%s\",\"app-profile\":\"%s\",\"name\":\"%s\"}`, tenant, app, nsName)
+	dnJson := fmt.Sprintf(`{\"tenant\":\"%s\",\"app-profile\":\"%s\",\"name\":\"%s_EPG\"}`, tenant, app, nsName)
 	patch := []byte(fmt.Sprintf(`{"metadata":{"annotations":{"opflex.cisco.com/endpoint-group": "%s"}}}`, dnJson))
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{

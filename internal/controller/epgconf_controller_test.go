@@ -95,7 +95,7 @@ var _ = Describe("Epgconf Controller", func() {
 						return false
 					}
 					annotation := namespace.Annotations["opflex.cisco.com/endpoint-group"]
-					expectedAnnotation := fmt.Sprintf(`{"tenant":"%s","app-profile":"%s","name":"%s"}`, cniConf.Tenant, cniConf.ApplicationProfile, conf.Namespace)
+					expectedAnnotation := fmt.Sprintf(`{"tenant":"%s","app-profile":"%s","name":"%s_EPG"}`, cniConf.Tenant, cniConf.ApplicationProfile, conf.Namespace)
 					return annotation == expectedAnnotation
 				}, timeout, interval).Should(BeTrue(), "Namespace should have the correct annotation")
 			})

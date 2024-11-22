@@ -18,7 +18,7 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2024-10-21T11:34:18Z"
+    createdAt: "2024-11-05T15:40:21Z"
     operators.operatorframework.io/builder: operator-sdk-v1.37.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
   name: epg-config-operator.v1.0.0
@@ -57,7 +57,7 @@ spec:
           verbs:
           - get
           - list
-          - path
+          - patch
           - watch
         - apiGroups:
           - ""
@@ -68,9 +68,15 @@ spec:
           - list
           - watch
         - apiGroups:
+          - ""
+          resources:
+          - pods/exec
+          verbs:
+          - create
+        - apiGroups:
           - epg.custom.aci
           resources:
-          - confs
+          - epgconfs
           verbs:
           - create
           - delete
@@ -82,13 +88,13 @@ spec:
         - apiGroups:
           - epg.custom.aci
           resources:
-          - confs/finalizers
+          - epgconfs/finalizers
           verbs:
           - update
         - apiGroups:
           - epg.custom.aci
           resources:
-          - confs/status
+          - epgconfs/status
           verbs:
           - get
           - patch
