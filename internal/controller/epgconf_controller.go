@@ -59,9 +59,9 @@ type CniConfig struct {
 	ConsumedContracts  []string
 }
 
-//+kubebuilder:rbac:groups=epg.custom.aci,resources=epgconfs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=epg.custom.aci,resources=epgconfs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=epg.custom.aci,resources=epgconfs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=epg.custom.aci,resources=epgconfs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=epg.custom.aci,resources=epgconfs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=epg.custom.aci,resources=epgconfs/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -134,9 +134,9 @@ func (r *EpgconfReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *EpgconfReconciler) ReconcileEpgConf(ctx context.Context, l logr.Logger, conf *epgv1alpha1.Epgconf) (ctrl.Result, error) {
-	err := r.ApicClient.CreateEpg(fmt.Sprintf(conf.GetNamespace()+"_EPG"), r.CniConfig.ApplicationProfile, r.CniConfig.Tenant, r.CniConfig.BridgeDomain, r.CniConfig.VmmDomain, r.CniConfig.VmmDomainType)
+	err := r.ApicClient.CreateEpg(fmt.Sprintf(conf.GetNamespace()+"_EPG"), r.CniConfig.ApplicationProfile, r.CniConfig.Tenant, r.CniConfig.BridgeDomain, r.CniConfig.VmmDomain, r.CniConfig.VmmDomainType) //nolint:govet
 	if err != nil {
-		l.Error(err, "error occured while creating epg")
+		l.Error(err, "error occurred while creating epg")
 		return ctrl.Result{}, err
 	}
 
@@ -191,9 +191,13 @@ func (r *EpgconfReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *EpgconfReconciler) finalizeEpgConf(ctx context.Context, l logr.Logger, c *epgv1alpha1.Epgconf) error {
 	l.Info(fmt.Sprintf("Deleting EPG  %s", c.GetNamespace()+"_EPG"))
-	r.ApicClient.DeleteEpg(c.GetNamespace()+"_EPG", r.CniConfig.ApplicationProfile, r.CniConfig.Tenant)
+	err := r.ApicClient.DeleteEpg(c.GetNamespace()+"_EPG", r.CniConfig.ApplicationProfile, r.CniConfig.Tenant)
 
-	err := r.RemoveAnnotationNamespace(ctx, c.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("error occurred while deleting EPG: %w", err)
+	}
+
+	err = r.RemoveAnnotationNamespace(ctx, c.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("error occurred while deleting annotation on namespace: %w", err)
 	}
