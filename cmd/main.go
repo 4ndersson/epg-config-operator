@@ -40,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
@@ -47,7 +48,7 @@ import (
 	"github.com/4ndersson/epg-config-operator/internal/controller"
 	"github.com/4ndersson/epg-config-operator/pkg/aci"
 	"github.com/tidwall/gjson"
-	//+kubebuilder:scaffold:imports
+	// +kubebuilder:scaffold:imports
 )
 
 var (
@@ -59,18 +60,24 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(epgv1alpha1.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
+	// +kubebuilder:scaffold:scheme
 }
 
 func getStartupConfiguration(c client.Client, cs *kubernetes.Clientset, co *rest.Config) (controller.CniConfig, error) {
 	configConfigMap := &corev1.ConfigMapList{}
-	err := c.List(context.TODO(), configConfigMap, client.InNamespace("aci-containers-system"), client.MatchingFields{"metadata.name": "aci-containers-config"})
+	err := c.List(context.TODO(),
+		configConfigMap,
+		client.InNamespace("aci-containers-system"),
+		client.MatchingFields{"metadata.name": "aci-containers-config"})
 	if err != nil {
 		return controller.CniConfig{}, err
 	}
 
 	contractConfigMap := &corev1.ConfigMapList{}
-	err = c.List(context.TODO(), contractConfigMap, client.InNamespace("aci-containers-system"), client.MatchingFields{"metadata.name": "default-epg-contracts"})
+	err = c.List(context.TODO(),
+		contractConfigMap,
+		client.InNamespace("aci-containers-system"),
+		client.MatchingFields{"metadata.name": "default-epg-contracts"})
 	if err != nil {
 		return controller.CniConfig{}, err
 	}
@@ -100,10 +107,12 @@ func getStartupConfiguration(c client.Client, cs *kubernetes.Clientset, co *rest
 			Namespace("aci-containers-system").
 			SubResource("exec").
 			VersionedParams(&corev1.PodExecOptions{
-				Command: []string{"/bin/sh", "-c", fmt.Sprintf("cat %s", gjson.Get(configConfigMap.Items[0].Data["controller-config"], "apic-private-key-path").String())},
-				Stdin:   false,
-				Stdout:  true,
-				Stderr:  true,
+				Command: []string{"/bin/sh", "-c",
+					fmt.Sprintf("cat %s", gjson.Get(configConfigMap.Items[0].Data["controller-config"],
+						"apic-private-key-path").String())},
+				Stdin:  false,
+				Stdout: true,
+				Stderr: true,
 			}, runtime.NewParameterCodec(scheme))
 
 		exec, err := remotecommand.NewSPDYExecutor(co, "POST", req.URL())
@@ -141,13 +150,14 @@ func getStartupConfiguration(c client.Client, cs *kubernetes.Clientset, co *rest
 	}
 
 	return controller.CniConfig{
-		ApicIp:             gjson.Get(configConfigMap.Items[0].Data["controller-config"], "apic-hosts.0").String(),
-		ApicUsername:       gjson.Get(configConfigMap.Items[0].Data["controller-config"], "apic-username").String(),
-		ApicPassword:       password,
-		ApicPrivateKey:     cert,
-		KeyPath:            gjson.Get(configConfigMap.Items[0].Data["controller-config"], "apic-private-key-path").String(),
-		Tenant:             gjson.Get(configConfigMap.Items[0].Data["controller-config"], "aci-policy-tenant").String(),
-		BridgeDomain:       strings.Replace(strings.Split(gjson.Get(configConfigMap.Items[0].Data["controller-config"], "aci-podbd-dn").String(), "/")[2], "BD-", "", -1),
+		ApicIp:         gjson.Get(configConfigMap.Items[0].Data["controller-config"], "apic-hosts.0").String(),
+		ApicUsername:   gjson.Get(configConfigMap.Items[0].Data["controller-config"], "apic-username").String(),
+		ApicPassword:   password,
+		ApicPrivateKey: cert,
+		KeyPath:        gjson.Get(configConfigMap.Items[0].Data["controller-config"], "apic-private-key-path").String(),
+		Tenant:         gjson.Get(configConfigMap.Items[0].Data["controller-config"], "aci-policy-tenant").String(),
+		BridgeDomain: strings.Replace(strings.Split(gjson.Get(configConfigMap.Items[0].Data["controller-config"],
+			"aci-podbd-dn").String(), "/")[2], "BD-", "", -1),
 		VmmDomain:          gjson.Get(configConfigMap.Items[0].Data["controller-config"], "aci-vmm-domain").String(),
 		VmmDomainType:      gjson.Get(configConfigMap.Items[0].Data["controller-config"], "aci-vmm-type").String(),
 		ApplicationProfile: gjson.Get(configConfigMap.Items[0].Data["controller-config"], "app-profile").String(),
@@ -167,13 +177,15 @@ func main() {
 	var probeAddr string
 	var secureMetrics bool
 	var enableHTTP2 bool
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	var tlsOpts []func(*tls.Config)
+	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
+		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.BoolVar(&secureMetrics, "metrics-secure", false,
-		"If set the metrics endpoint is served securely")
+	flag.BoolVar(&secureMetrics, "metrics-secure", true,
+		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
 	opts := zap.Options{
@@ -195,7 +207,6 @@ func main() {
 		c.NextProtos = []string{"http/1.1"}
 	}
 
-	tlsOpts := []func(*tls.Config){}
 	if !enableHTTP2 {
 		tlsOpts = append(tlsOpts, disableHTTP2)
 	}
@@ -204,13 +215,31 @@ func main() {
 		TLSOpts: tlsOpts,
 	})
 
+	// Metrics endpoint is enabled in 'config/default/kustomization.yaml'. The Metrics options configure the server.
+	// More info:
+	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.1/pkg/metrics/server
+	// - https://book.kubebuilder.io/reference/metrics.html
+	metricsServerOptions := metricsserver.Options{
+		BindAddress:   metricsAddr,
+		SecureServing: secureMetrics,
+		TLSOpts:       tlsOpts,
+	}
+
+	if secureMetrics {
+		// FilterProvider is used to protect the metrics endpoint with authn/authz.
+		// These configurations ensure that only authorized users and service accounts
+		// can access the metrics endpoint. The RBAC are configured in 'config/rbac/kustomization.yaml'. More info:
+		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.1/pkg/metrics/filters#WithAuthenticationAndAuthorization
+		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
+
+		// TODO(user): If CertDir, CertName, and KeyName are not specified, controller-runtime will automatically
+		// generate self-signed certificates for the metrics server. While convenient for development and testing,
+		// this setup is not recommended for production.
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme: scheme,
-		Metrics: metricsserver.Options{
-			BindAddress:   metricsAddr,
-			SecureServing: secureMetrics,
-			TLSOpts:       tlsOpts,
-		},
+		Scheme:                 scheme,
+		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
@@ -247,7 +276,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	apicClient, err := aci.NewClient(cniConfig.ApicIp, cniConfig.ApicUsername, cniConfig.ApicPassword, cniConfig.ApicPrivateKey)
+	apicClient, err := aci.NewClient(cniConfig.ApicIp,
+		cniConfig.ApicUsername,
+		cniConfig.ApicPassword,
+		cniConfig.ApicPrivateKey)
 	if err != nil {
 		setupLog.Error(err, "unable to setup apic client")
 		os.Exit(1)
@@ -262,7 +294,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Conf")
 		os.Exit(1)
 	}
-	//+kubebuilder:scaffold:builder
+	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")

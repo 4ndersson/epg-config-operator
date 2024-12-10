@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -36,7 +37,7 @@ import (
 
 	epgv1alpha1 "github.com/4ndersson/epg-config-operator/api/v1alpha1"
 	"github.com/4ndersson/epg-config-operator/pkg/aci"
-	//+kubebuilder:scaffold:imports
+	// +kubebuilder:scaffold:imports
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
@@ -47,6 +48,8 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var apicClient aci.ApicInterface
 var cniConf CniConfig
+var ctx context.Context
+var cancel context.CancelFunc
 
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -56,6 +59,8 @@ func TestControllers(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+
+	ctx, cancel = context.WithCancel(context.TODO())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -80,7 +85,7 @@ var _ = BeforeSuite(func() {
 	err = epgv1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	//+kubebuilder:scaffold:scheme
+	// +kubebuilder:scaffold:scheme
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
@@ -116,6 +121,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+	cancel()
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })

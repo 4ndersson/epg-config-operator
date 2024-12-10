@@ -1,0 +1,27 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: epg-config-operator
+  name: epg-config-operator-epgconf-editor-role
+rules:
+- apiGroups:
+  - epg.custom.aci
+  resources:
+  - epgconfs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - epg.custom.aci
+  resources:
+  - epgconfs/status
+  verbs:
+  - get

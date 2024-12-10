@@ -39,8 +39,8 @@ type EpgconfStatus struct {
 	State string `json:"state"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // Epgconf is the Schema for the epgconfs API
 type Epgconf struct {
@@ -51,7 +51,7 @@ type Epgconf struct {
 	Status EpgconfStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // EpgconfList contains a list of Epgconf
 type EpgconfList struct {
